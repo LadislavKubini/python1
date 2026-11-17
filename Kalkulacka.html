@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kalkulačka</title>
+
+    <style>
+        body {
+            max-width: 420px;
+            margin: 40px auto;
+            padding: 0 20px;
+            font-family: sans-serif;
+            background: #f5f7fa;
+            color: #182635;
+        }
+
+        form {
+            display: grid;
+            gap: 12px;
+        }
+
+        input, select, button {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 10px;
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        #vysledok {
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+
+        #chyba {
+            color: #b00020;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Kalkulačka</h1>
+
+    <form id="kalkulacka" novalidate>
+        <label for="cislo-a">Prvé číslo</label>
+        <input id="cislo-a" name="a" type="number" step="any" required>
+
+        <label for="operacia">Operácia</label>
+        <select id="operacia" name="operacia">
+            <option value="plus">Sčítanie (+)</option>
+            <option value="minus">Odčítanie (−)</option>
+            <option value="krat">Násobenie (×)</option>
+            <option value="deleno">Delenie (÷)</option>
+        </select>
+
+        <label for="cislo-b">Druhé číslo</label>
+        <input id="cislo-b" name="b" type="number" step="any" required>
+
+        <button type="submit">Vypočítať</button>
+        <button type="reset">Vymazať</button>
+    </form>
+
+    <p>Výsledok <output id="vysledok" aria-live="polite"></output></p>
+    <p id="chyba" role="alert"></p>
+
+    <script>
+        const formular = document.getElementById("kalkulacka");
+        const vstupA = document.getElementById("cislo-a");
+        const vstupB = document.getElementById("cislo-b");
+        const operacia = document.getElementById("operacia");
+        const vystup = document.getElementById("vysledok");
+        const chyba = document.getElementById("chyba");
+
+        formular.addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            vystup.textContent = "";
+            chyba.textContent = "";
+
+            const a = vstupA.valueAsNumber;
+            const b = vstupB.valueAsNumber;
+
+            if (!Number.isFinite(a) || !Number.isFinite(b)) {
+                chyba.textContent = "Zadajte obe platné čísla.";
+                return;
+            }
+
+            let vysledok;
+
+            switch (operacia.value) {
+                case "plus":
+                    vysledok = a + b;
+                    break;
+                case "minus":
+                    vysledok = a - b;
+                    break;
+                case "krat":
+                    vysledok = a * b;
+                    break;
+                case "deleno":
+                    if (b === 0) {
+                        chyba.textContent = "Nulou sa nedá deliť.";
+                        return;
+                    }
+                    vysledok = a / b;
+                    break;
+            }
+
+            if (!Number.isFinite(vysledok)) {
+                chyba.textContent = "Výsledok je mimo podporovaného rozsahu.";
+                return;
+            }
+
+            vystup.textContent = String(vysledok);
+        });
+
+        formular.addEventListener("reset", function () {
+            vystup.textContent = "";
+            chyba.textContent = "";
+        });
+    </script>
+</body>
+</html>
