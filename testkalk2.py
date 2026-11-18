@@ -1,6 +1,5 @@
 from playwright.sync_api import sync_playwright, expect
 
-
 with sync_playwright() as playwright:
     browser = playwright.chromium.launch(headless=False)
     page = browser.new_page()
@@ -61,16 +60,18 @@ with sync_playwright() as playwright:
             "https://ladislavkubini.github.io/python1/Kalkulacka.html"
         )
 
-        vysledky = [
-            doCalc(12, "+", 3, "15"),
-            doCalc(12, "-", 20, "-8"),
-            vymazat(),
-            doCalc(-4, "*", 3, "-12"),
-            doCalc(7, "/", 2, "3.5"),
-        ]
+        vysledky = []
+        vysledky.append(doCalc(12, "+", 3, "15"))
+        vymazat()
+        vysledky.append(doCalc(12, "-", 20, "-8"))
+        vymazat()
+        vysledky.append(doCalc(-4, "*", 3, "-12"))
+        vymazat()
+        vysledky.append(doCalc(7, "/", 3, "3.5"))
+        vymazat()        
 
         print()
-        print(f"Úspešné testy: {sum(vysledky)} / {len(vysledky)}")
+        print(f"Úspešné testy: {sum(vysledky)} / {len(vysledky)}") # bool sa pocita ako 0 / 1
 
     finally:
         browser.close()
