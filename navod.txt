@@ -1,0 +1,5 @@
+a415066@a415066-Precision-M6800:~/Testovanie/PlaywrightProject$ source /home/aiagent/pocasie/.venv/bin/activate
+(.venv) a415066@a415066-Precision-M6800:~/Testovanie/PlaywrightProject$ python3 priklad.py
+Slovenský hydrometeorologický ústav
+(.venv) a415066@a415066-Precision-M6800:~/Testovanie/PlaywrightProject$ deactivate
+
