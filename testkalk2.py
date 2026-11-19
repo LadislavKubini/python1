@@ -71,7 +71,7 @@ with sync_playwright() as playwright:
         vymazat()        
 
         print()
-        print(f"Úspešné testy: {sum(vysledky)} / {len(vysledky)}") # bool sa pocita ako 0 / 1
+        print(f"Úspešné testy: {sum(vysledky)} / {len(vysledky)}") # bool sa zrejme pocita ako 0 / 1
 
     finally:
         browser.close()
