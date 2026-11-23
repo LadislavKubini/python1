@@ -226,10 +226,49 @@
 		const tlacidloObnovit = document.getElementById("obnovit");
 
 		// Pole bude obsahovať výhradne objekty triedy Pracovnik.
-		let pracovnici = nacitajPracovnikov();
+		let pracovnici = [];
+		let dataNacitane = false;
 
 		// ID pracovníka, ktorého práve upravujeme.
 		let otvoreneId = null;
+
+		async function volajApi(metoda, udaje) {
+			const nastavenia = { method: metoda };
+
+			if (udaje !== undefined) {
+				nastavenia.headers = {
+					"Content-Type": "application/json"
+				};
+				nastavenia.body = JSON.stringify(udaje);
+			}
+
+			const odpoved = await fetch("api/pracovnici.php", nastavenia);
+
+			let telo;
+			try {
+				telo = await odpoved.json();
+			} catch {
+				throw new Error("Server nevrátil platný JSON.");
+			}
+
+			if (!odpoved.ok) {
+				throw new Error(
+					telo.chyba || "Požiadavka zlyhala: HTTP " + odpoved.status
+				);
+			}
+
+			return telo;
+		}
+
+		async function nacitajPracovnikov() {
+			const udaje = await volajApi("GET");
+
+			if (!platneUdaje(udaje)) {
+				throw new Error("API vrátilo údaje v neplatnom formáte.");
+			}
+
+			return udaje.map(Pracovnik.zObjektu);
+		}
 
 		function kopiaPovodnychUdajov() {
 			const novePole = [];
@@ -249,9 +288,6 @@
 			chyba.textContent = "";
 		}
 
-		// Kontrolujeme údaje načítané z JSON ešte pred vytvorením
-		// objektov Pracovnik. Chýbajúce alebo poškodené vlastnosti
-		// uložených záznamov tak nezamaskujeme predvolenými hodnotami.
 		function platneUdaje(udaje) {
 			if (!Array.isArray(udaje)) {
 				return false;
@@ -291,34 +327,14 @@
 			return true;
 		}
 
-		function nacitajPracovnikov() {
-			try {
-				const ulozene = localStorage.getItem(klucUloziska);
+		async function nacitajPracovnikov() {
+			const udaje = await volajApi("GET");
 
-				if (ulozene === null) {
-					return kopiaPovodnychUdajov();
-				}
-
-				// JSON.parse() vytvorí pole obyčajných objektov.
-				const udaje = JSON.parse(ulozene);
-
-				if (!platneUdaje(udaje)) {
-					throw new Error("Neplatná štruktúra údajov.");
-				}
-
-				const novePole = [];
-				for (let i = 0; i < udaje.length; i++) {
-					const pracovnik = Pracovnik.zObjektu(udaje[i]);
-					novePole.push(pracovnik);
-				}
-
-				return novePole;
-			} catch (error) {
-				chyba.textContent =
-					"Uložené údaje sa nepodarilo načítať. " +
-					"Zobrazujú sa pôvodné testovacie údaje.";
-				return kopiaPovodnychUdajov();
+			if (!platneUdaje(udaje)) {
+				throw new Error("API vrátilo údaje v neplatnom formáte.");
 			}
+
+			return udaje.map(Pracovnik.zObjektu);
 		}
 
 		function ulozPracovnikov(noveUdaje) {
@@ -450,7 +466,7 @@
 			detail.hidden = false;
 		}
 
-		function ulozFormular(event) {
+		async function ulozFormular(event) {
 			event.preventDefault();
 			vymazHlasenia();
 
@@ -463,59 +479,73 @@
 				vstupMeno.focus();
 				return;
 			}
+
 			if (meno.length > 100) {
 				chyba.textContent = "Meno môže mať najviac 100 znakov.";
 				return;
 			}
+
 			if (!oddelenia.includes(oddelenie)) {
 				chyba.textContent = "Vyberte platné oddelenie.";
 				return;
 			}
-			const upravovanyPracovnik = najdiPracovnika(otvoreneId);
 
-			if (upravovanyPracovnik === undefined) {
+			const povodny = najdiPracovnika(otvoreneId);
+
+			if (povodny === undefined) {
 				chyba.textContent = "Pracovník neexistuje.";
 				return;
 			}
 
-			const noveUdaje = [];
-			for (let i = 0; i < pracovnici.length; i++) {
-				const povodnyPracovnik = pracovnici[i];
+			const zmeneny = new Pracovnik(
+				povodny.id,
+				meno,
+				oddelenie,
+				aktivny
+			);
 
-				// Pripravíme novú kópiu, aby prípadné zlyhanie zápisu nezmenilo aktuálne údaje v pamäti.
-				const novyPracovnik = povodnyPracovnik.kopia();
+			try {
+				await volajApi("PUT", zmeneny.toJSON());
 
-				if (novyPracovnik.id === otvoreneId) {
-					// Priradenia volajú settery triedy Pracovnik.
-					novyPracovnik.meno = meno;
-					novyPracovnik.oddelenie = oddelenie;
-					novyPracovnik.aktivny = aktivny;
-				}
-				noveUdaje.push(novyPracovnik);
-			}
+				pracovnici = pracovnici.map(pracovnik =>
+					pracovnik.id === zmeneny.id ? zmeneny : pracovnik
+				);
 
-			if (ulozPracovnikov(noveUdaje)) {
-				vstupMeno.value = meno;
 				sprava.textContent = "Zmeny boli uložené.";
+			} catch (error) {
+				chyba.textContent =
+					"Zmeny sa nepodarilo uložiť: " + error.message;
 			}
 		}
 
-		function obnovTestovacieUdaje() {
+		async function obnovTestovacieUdaje() {
 			vymazHlasenia();
+			tlacidloObnovit.disabled = true;
 
-			const noveUdaje = kopiaPovodnychUdajov();
+			try {
+				for (const pracovnik of kopiaPovodnychUdajov()) {
+					await volajApi("PUT", pracovnik.toJSON());
+				}
 
-			if (ulozPracovnikov(noveUdaje)) {
+				pracovnici = await nacitajPracovnikov();
 				hladanie.value = "";
 				filterOddelenie.value = "";
-				zobrazZoznam();
+				zobrazAktualnuStranku();
 				sprava.textContent = "Testovacie údaje boli obnovené.";
+			} catch (error) {
+				chyba.textContent =
+					"Testovacie údaje sa nepodarilo obnoviť: " + error.message;
+			} finally {
+				tlacidloObnovit.disabled = false;
 			}
 		}
 
 		function obsluzZmenuAdresy() {
 			vymazHlasenia();
-			zobrazAktualnuStranku();
+
+			if (dataNacitane) {
+				zobrazAktualnuStranku();
+			}
 		}
 
 		// Registrácia obsluhy udalostí.
@@ -526,7 +556,19 @@
 		window.addEventListener("hashchange", obsluzZmenuAdresy);
 
 		// Prvé zobrazenie po načítaní dokumentu.
-		zobrazAktualnuStranku();	
+		async function spustiAplikaciu() {
+			try {
+				pracovnici = await nacitajPracovnikov();
+				dataNacitane = true;
+				zobrazAktualnuStranku();
+			} catch (error) {
+				chyba.textContent =
+					"Zoznam pracovníkov sa nepodarilo načítať: " +
+					error.message;
+			}
+		}
+
+		spustiAplikaciu();		
 	</script>
 </body>
 </html>

@@ -61,7 +61,7 @@ try {
 
         $meno = trim($meno);
 
-        if ($meno === '' || mb_strlen($meno, 'UTF-8') > 100) {
+        if ($meno === '' || strlen($meno) > 100) {
             odpoved(['chyba' => 'Meno musí mať 1 až 100 znakov.'], 400);
         }
 
