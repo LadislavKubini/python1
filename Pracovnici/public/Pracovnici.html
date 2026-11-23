@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Evidencia pracovníkov</title>
+	<link rel="icon" href="favicona-enitech.png">
+    <style>
+        body {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 20px;
+            font-family: sans-serif;
+            line-height: 1.5;
+            color: #182635;
+            background: #f5f7fa;
+        }
+
+        [hidden] {
+            display: none !important;
+        }
+
+        .filtre {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input, select, button {
+            box-sizing: border-box;
+            padding: 8px;
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        a {
+            color: #175ca4;
+        }
+
+        .tabulka {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #b8c2cc;
+            text-align: left;
+        }
+
+        th {
+            background: #e8eef7;
+        }
+
+        form {
+            max-width: 420px;
+        }
+
+        form input, form select {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .akcie {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        #sprava {
+            color: #235c27;
+        }
+
+        #chyba {
+            color: #b00020;
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <section id="zoznam">
+            <h1>Evidencia pracovníkov</h1>
+
+            <div class="filtre">
+                <div>
+                    <label for="hladanie">Vyhľadať meno</label>
+                    <input
+                        id="hladanie"
+                        type="search"
+                        autocomplete="off"
+                    >
+                </div>
+
+                <div>
+                    <label for="filter-oddelenie">Oddelenie</label>
+                    <select id="filter-oddelenie">
+                        <option value="">Všetky oddelenia</option>
+                        <option value="IT">IT</option>
+                        <option value="Účtovníctvo">Účtovníctvo</option>
+                        <option value="Výroba">Výroba</option>
+                    </select>
+                </div>
+            </div>
+
+            <p id="pocet"></p>
+
+            <div class="tabulka">
+                <table aria-label="Pracovníci">
+                    <thead>
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">Meno</th>
+                            <th scope="col">Oddelenie</th>
+                            <th scope="col">Stav</th>
+                            <th scope="col">Akcia</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="riadky"></tbody>
+                </table>
+            </div>
+
+            <p id="prazdny-zoznam" hidden>
+                Nenašli sa žiadni pracovníci.
+            </p>
+
+            <div class="akcie">
+                <button id="obnovit" type="button">
+                    Obnoviť testovacie údaje
+                </button>
+            </div>
+        </section>
+
+        <section id="detail" hidden>
+            <h1>Detail pracovníka</h1>
+
+            <form id="formular" novalidate>
+                <label for="pracovnik-id">ID</label>
+                <input id="pracovnik-id" type="text" readonly>
+
+                <label for="meno">Meno</label>
+                <input
+                    id="meno"
+                    type="text"
+                    maxlength="100"
+                    required
+                >
+
+                <label for="oddelenie">Oddelenie</label>
+                <select id="oddelenie">
+                    <option value="IT">IT</option>
+                    <option value="Účtovníctvo">Účtovníctvo</option>
+                    <option value="Výroba">Výroba</option>
+                </select>
+
+                <label for="stav">Stav</label>
+                <select id="stav">
+                    <option value="true">Aktívny</option>
+                    <option value="false">Neaktívny</option>
+                </select>
+
+                <div class="akcie">
+                    <button type="submit">Uložiť</button>
+                    <a href="#zoznam">Späť na zoznam</a>
+                </div>
+            </form>
+        </section>
+
+        <p id="sprava" role="status"></p>
+        <p id="chyba" role="alert"></p>
+    </main>
+
+	<script src="Pracovnik.js"></script>
+
+	<script>
+		"use strict";
+
+		// Počiatočné údaje tvoria objekty triedy Pracovnik.
+		const povodniPracovnici = [
+			new Pracovnik(1, "Anna Nováková", "IT", true),
+			new Pracovnik(2, "Peter Kováč", "Účtovníctvo", true),
+			new Pracovnik(3, "Anna Malá", "Účtovníctvo", false),
+			new Pracovnik(4, "Ján Horváth", "Výroba", true),
+			new Pracovnik(5, "Eva Bieliková", "IT", false)
+		];
+
+		const klucUloziska = "cvicenie_pracovnici";
+		const oddelenia = ["IT", "Účtovníctvo", "Výroba"];
+
+		// Odkazy na HTML prvky.
+		const zoznam = document.getElementById("zoznam");
+		const detail = document.getElementById("detail");
+		const riadky = document.getElementById("riadky");
+
+		const hladanie = document.getElementById("hladanie");
+		const filterOddelenie = document.getElementById("filter-oddelenie");
+		const pocet = document.getElementById("pocet");
+		const prazdnyZoznam = document.getElementById("prazdny-zoznam");
+
+		const formular = document.getElementById("formular");
+		const vstupId = document.getElementById("pracovnik-id");
+		const vstupMeno = document.getElementById("meno");
+		const vstupOddelenie = document.getElementById("oddelenie");
+		const vstupStav = document.getElementById("stav");
+
+		const sprava = document.getElementById("sprava");
+		const chyba = document.getElementById("chyba");
+		const tlacidloObnovit = document.getElementById("obnovit");
+
+		// Pole bude obsahovať výhradne objekty triedy Pracovnik.
+		let pracovnici = nacitajPracovnikov();
+
+		// ID pracovníka, ktorého práve upravujeme.
+		let otvoreneId = null;
+
+		function kopiaPovodnychUdajov() {
+			const novePole = [];
+
+			for (let i = 0; i < povodniPracovnici.length; i++) {
+				const povodnyPracovnik = povodniPracovnici[i];
+				// Metóda kopia() vytvorí nový objekt Pracovnik.
+				const novyPracovnik = povodnyPracovnik.kopia();
+				novePole.push(novyPracovnik);
+			}
+
+			return novePole;
+		}
+
+		function vymazHlasenia() {
+			sprava.textContent = "";
+			chyba.textContent = "";
+		}
+
+		// Kontrolujeme údaje načítané z JSON ešte pred vytvorením
+		// objektov Pracovnik. Chýbajúce alebo poškodené vlastnosti
+		// uložených záznamov tak nezamaskujeme predvolenými hodnotami.
+		function platneUdaje(udaje) {
+			if (!Array.isArray(udaje)) {
+				return false;
+			}
+
+			const identifikatory = new Set();
+
+			for (let i = 0; i < udaje.length; i++) {
+				const pracovnik = udaje[i];
+
+				if (pracovnik === null || 
+					typeof pracovnik !== "object") {
+					return false;
+				}
+
+				if (!Number.isInteger(pracovnik.id) ||
+					pracovnik.id <= 0 ||
+					identifikatory.has(pracovnik.id)) {
+					return false;
+				}
+
+				if (typeof pracovnik.meno !== "string" ||
+					pracovnik.meno.trim() === "" ||
+					pracovnik.meno.length > 100) {
+					return false;
+				}
+				if (!oddelenia.includes(pracovnik.oddelenie)) {
+					return false;
+				}
+
+				if (typeof pracovnik.aktivny !== "boolean") {
+					return false;
+				}
+
+				identifikatory.add(pracovnik.id);
+			}
+			return true;
+		}
+
+		function nacitajPracovnikov() {
+			try {
+				const ulozene = localStorage.getItem(klucUloziska);
+
+				if (ulozene === null) {
+					return kopiaPovodnychUdajov();
+				}
+
+				// JSON.parse() vytvorí pole obyčajných objektov.
+				const udaje = JSON.parse(ulozene);
+
+				if (!platneUdaje(udaje)) {
+					throw new Error("Neplatná štruktúra údajov.");
+				}
+
+				const novePole = [];
+				for (let i = 0; i < udaje.length; i++) {
+					const pracovnik = Pracovnik.zObjektu(udaje[i]);
+					novePole.push(pracovnik);
+				}
+
+				return novePole;
+			} catch (error) {
+				chyba.textContent =
+					"Uložené údaje sa nepodarilo načítať. " +
+					"Zobrazujú sa pôvodné testovacie údaje.";
+				return kopiaPovodnychUdajov();
+			}
+		}
+
+		function ulozPracovnikov(noveUdaje) {
+			try {
+				// JSON.stringify() automaticky zavolá toJSON()
+				// na každom objekte Pracovnik.
+				const jsonText = JSON.stringify(noveUdaje);
+				localStorage.setItem(klucUloziska, jsonText);
+				// Pracovné pole nahradíme až po úspešnom zápise.
+				pracovnici = noveUdaje;
+
+				return true;
+			} catch (error) {
+				chyba.textContent =
+					"Údaje sa nepodarilo uložiť do prehliadača.";
+				return false;
+			}
+		}
+
+		function normalizujText(text) {
+			const bezOkrajovychMedzier = text.trim();
+			const malePismena = bezOkrajovychMedzier.toLocaleLowerCase("sk");
+			return malePismena;
+		}
+
+		function najdiPracovnika(id) {
+			for (let i = 0; i < pracovnici.length; i++) {
+				const pracovnik = pracovnici[i];
+
+				if (pracovnik.id === id) {
+					return pracovnik;
+				}
+			}
+			return undefined;
+		}
+
+		function zobrazZoznam() {
+			const hladanyText = normalizujText(hladanie.value);
+			const vybraneOddelenie = filterOddelenie.value;
+
+			// Odstránime predchádzajúce riadky tabuľky.
+			riadky.replaceChildren();
+
+			let pocetZobrazenych = 0;
+			for (let i = 0; i < pracovnici.length; i++) {
+				const pracovnik = pracovnici[i];
+
+				const meno = normalizujText(pracovnik.meno);
+				const vyhovujeMeno = meno.includes(hladanyText);
+
+				let vyhovujeOddelenie = true;
+
+				if (vybraneOddelenie !== "") {
+					vyhovujeOddelenie =
+						pracovnik.oddelenie === vybraneOddelenie;
+				}
+
+				if (!vyhovujeMeno || !vyhovujeOddelenie) {
+					continue;
+				}
+
+				const riadok = document.createElement("tr");
+				let stavText = "Neaktívny";
+				if (pracovnik.aktivny) {
+					stavText = "Aktívny";
+				}
+
+				const hodnoty = [
+					pracovnik.id,
+					pracovnik.meno,
+					pracovnik.oddelenie,
+					stavText
+				];
+				for (let j = 0; j < hodnoty.length; j++) {
+					const bunka = document.createElement("td");
+
+					bunka.textContent = String(hodnoty[j]);
+					riadok.appendChild(bunka);
+				}
+
+				const akcia = document.createElement("td");
+				const odkaz = document.createElement("a");
+
+				odkaz.href = "#pracovnik/" + pracovnik.id;
+				odkaz.textContent = "Detail";
+
+				akcia.appendChild(odkaz);
+				riadok.appendChild(akcia);
+				riadky.appendChild(riadok);
+
+				pocetZobrazenych++;
+			}
+
+			pocet.textContent =
+				`Zobrazené záznamy: ${pocetZobrazenych} / ${pracovnici.length}`;
+			prazdnyZoznam.hidden = pocetZobrazenych > 0;
+		}
+
+		function zobrazAktualnuStranku() {
+			const fragmentAdresy = location.hash;
+			const zhoda = fragmentAdresy.match(/^#pracovnik\/(\d+)$/);
+
+			// Východiskovo zobrazíme zoznam.
+			otvoreneId = null;
+			zoznam.hidden = false;
+			detail.hidden = true;
+
+			if (zhoda === null) {
+				zobrazZoznam();
+				return;
+			}
+			const idText = zhoda[1];
+			const id = Number(idText);
+			const pracovnik = najdiPracovnika(id);
+
+			if (pracovnik === undefined) {
+				chyba.textContent = "Pracovník neexistuje.";
+				zobrazZoznam();
+				return;
+			}
+			otvoreneId = pracovnik.id;
+			// Hodnoty čítame pomocou getterov triedy Pracovnik.
+			vstupId.value = String(pracovnik.id);
+			vstupMeno.value = pracovnik.meno;
+			vstupOddelenie.value = pracovnik.oddelenie;
+			vstupStav.value = String(pracovnik.aktivny);
+
+			zoznam.hidden = true;
+			detail.hidden = false;
+		}
+
+		function ulozFormular(event) {
+			event.preventDefault();
+			vymazHlasenia();
+
+			const meno = vstupMeno.value.trim();
+			const oddelenie = vstupOddelenie.value;
+			const aktivny = vstupStav.value === "true";
+
+			if (meno === "") {
+				chyba.textContent = "Zadajte meno pracovníka.";
+				vstupMeno.focus();
+				return;
+			}
+			if (meno.length > 100) {
+				chyba.textContent = "Meno môže mať najviac 100 znakov.";
+				return;
+			}
+			if (!oddelenia.includes(oddelenie)) {
+				chyba.textContent = "Vyberte platné oddelenie.";
+				return;
+			}
+			const upravovanyPracovnik = najdiPracovnika(otvoreneId);
+
+			if (upravovanyPracovnik === undefined) {
+				chyba.textContent = "Pracovník neexistuje.";
+				return;
+			}
+
+			const noveUdaje = [];
+			for (let i = 0; i < pracovnici.length; i++) {
+				const povodnyPracovnik = pracovnici[i];
+
+				// Pripravíme novú kópiu, aby prípadné zlyhanie zápisu nezmenilo aktuálne údaje v pamäti.
+				const novyPracovnik = povodnyPracovnik.kopia();
+
+				if (novyPracovnik.id === otvoreneId) {
+					// Priradenia volajú settery triedy Pracovnik.
+					novyPracovnik.meno = meno;
+					novyPracovnik.oddelenie = oddelenie;
+					novyPracovnik.aktivny = aktivny;
+				}
+				noveUdaje.push(novyPracovnik);
+			}
+
+			if (ulozPracovnikov(noveUdaje)) {
+				vstupMeno.value = meno;
+				sprava.textContent = "Zmeny boli uložené.";
+			}
+		}
+
+		function obnovTestovacieUdaje() {
+			vymazHlasenia();
+
+			const noveUdaje = kopiaPovodnychUdajov();
+
+			if (ulozPracovnikov(noveUdaje)) {
+				hladanie.value = "";
+				filterOddelenie.value = "";
+				zobrazZoznam();
+				sprava.textContent = "Testovacie údaje boli obnovené.";
+			}
+		}
+
+		function obsluzZmenuAdresy() {
+			vymazHlasenia();
+			zobrazAktualnuStranku();
+		}
+
+		// Registrácia obsluhy udalostí.
+		formular.addEventListener("submit", ulozFormular);
+		hladanie.addEventListener("input", zobrazZoznam);
+		filterOddelenie.addEventListener("change", zobrazZoznam);
+		tlacidloObnovit.addEventListener("click", obnovTestovacieUdaje);
+		window.addEventListener("hashchange", obsluzZmenuAdresy);
+
+		// Prvé zobrazenie po načítaní dokumentu.
+		zobrazAktualnuStranku();	
+	</script>
+</body>
+</html>
