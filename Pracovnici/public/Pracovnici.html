@@ -193,15 +193,6 @@
 	<script>
 		"use strict";
 
-		// Počiatočné údaje tvoria objekty triedy Pracovnik.
-		// const povodniPracovnici = [
-		// 	new Pracovnik(1, "Anna Nováková", "IT", true),
-		// 	new Pracovnik(2, "Peter Kováč", "Účtovníctvo", true),
-		// 	new Pracovnik(3, "Anna Malá", "Účtovníctvo", false),
-		// 	new Pracovnik(4, "Ján Horváth", "Výroba", true),
-		// 	new Pracovnik(5, "Eva Bieliková", "IT", false)
-		// ];
-
 		const klucUloziska = "cvicenie_pracovnici";
 		const oddelenia = ["IT", "Účtovníctvo", "Výroba"];
 
@@ -259,19 +250,6 @@
 
 			return telo;
 		}
-
-		// function kopiaPovodnychUdajov() {
-		// 	const novePole = [];
-
-		// 	for (let i = 0; i < povodniPracovnici.length; i++) {
-		// 		const povodnyPracovnik = povodniPracovnici[i];
-		// 		// Metóda kopia() vytvorí nový objekt Pracovnik.
-		// 		const novyPracovnik = povodnyPracovnik.kopia();
-		// 		novePole.push(novyPracovnik);
-		// 	}
-
-		// 	return novePole;
-		// }
 
 		async function kopiaPovodnychUdajov() {
 			const odpoved = await fetch("povodniPracovnici-test-data.json");
