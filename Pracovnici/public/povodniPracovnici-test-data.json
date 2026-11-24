@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "meno": "Anna Nováková",
+    "oddelenie": "IT",
+    "aktivny": true
+  },
+  {
+    "id": 2,
+    "meno": "Peter Kováč",
+    "oddelenie": "Účtovníctvo",
+    "aktivny": true
+  },
+  {
+    "id": 3,
+    "meno": "Anna Malá",
+    "oddelenie": "Účtovníctvo",
+    "aktivny": false
+  },
+  {
+    "id": 4,
+    "meno": "Ján Horváth",
+    "oddelenie": "Výroba",
+    "aktivny": true
+  },
+  {
+    "id": 5,
+    "meno": "Eva Bieliková",
+    "oddelenie": "IT",
+    "aktivny": false
+  }
+]
