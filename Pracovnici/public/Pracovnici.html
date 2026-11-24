@@ -194,13 +194,13 @@
 		"use strict";
 
 		// Počiatočné údaje tvoria objekty triedy Pracovnik.
-		const povodniPracovnici = [
-			new Pracovnik(1, "Anna Nováková", "IT", true),
-			new Pracovnik(2, "Peter Kováč", "Účtovníctvo", true),
-			new Pracovnik(3, "Anna Malá", "Účtovníctvo", false),
-			new Pracovnik(4, "Ján Horváth", "Výroba", true),
-			new Pracovnik(5, "Eva Bieliková", "IT", false)
-		];
+		// const povodniPracovnici = [
+		// 	new Pracovnik(1, "Anna Nováková", "IT", true),
+		// 	new Pracovnik(2, "Peter Kováč", "Účtovníctvo", true),
+		// 	new Pracovnik(3, "Anna Malá", "Účtovníctvo", false),
+		// 	new Pracovnik(4, "Ján Horváth", "Výroba", true),
+		// 	new Pracovnik(5, "Eva Bieliková", "IT", false)
+		// ];
 
 		const klucUloziska = "cvicenie_pracovnici";
 		const oddelenia = ["IT", "Účtovníctvo", "Výroba"];
@@ -260,27 +260,35 @@
 			return telo;
 		}
 
-		async function nacitajPracovnikov() {
-			const udaje = await volajApi("GET");
+		// function kopiaPovodnychUdajov() {
+		// 	const novePole = [];
+
+		// 	for (let i = 0; i < povodniPracovnici.length; i++) {
+		// 		const povodnyPracovnik = povodniPracovnici[i];
+		// 		// Metóda kopia() vytvorí nový objekt Pracovnik.
+		// 		const novyPracovnik = povodnyPracovnik.kopia();
+		// 		novePole.push(novyPracovnik);
+		// 	}
+
+		// 	return novePole;
+		// }
+
+		async function kopiaPovodnychUdajov() {
+			const odpoved = await fetch("povodniPracovnici-test-data.json");
+
+			if (!odpoved.ok) {
+				throw new Error(
+					"Testovacie údaje sa nepodarilo načítať: HTTP " + odpoved.status
+				);
+			}
+
+			const udaje = await odpoved.json();
 
 			if (!platneUdaje(udaje)) {
-				throw new Error("API vrátilo údaje v neplatnom formáte.");
+				throw new Error("Súbor s testovacími údajmi má neplatný obsah.");
 			}
 
 			return udaje.map(Pracovnik.zObjektu);
-		}
-
-		function kopiaPovodnychUdajov() {
-			const novePole = [];
-
-			for (let i = 0; i < povodniPracovnici.length; i++) {
-				const povodnyPracovnik = povodniPracovnici[i];
-				// Metóda kopia() vytvorí nový objekt Pracovnik.
-				const novyPracovnik = povodnyPracovnik.kopia();
-				novePole.push(novyPracovnik);
-			}
-
-			return novePole;
 		}
 
 		function vymazHlasenia() {
@@ -519,14 +527,15 @@
 		}
 
 		async function obnovTestovacieUdaje() {
+			const povodniPracovnici = await kopiaPovodnychUdajov();
+
 			vymazHlasenia();
 			tlacidloObnovit.disabled = true;
 
 			try {
-				for (const pracovnik of kopiaPovodnychUdajov()) {
+				for (const pracovnik of povodniPracovnici) {
 					await volajApi("PUT", pracovnik.toJSON());
 				}
-
 				pracovnici = await nacitajPracovnikov();
 				hladanie.value = "";
 				filterOddelenie.value = "";

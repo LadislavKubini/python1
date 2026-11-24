@@ -46,6 +46,7 @@ try {
             odpoved(['chyba' => 'Požiadavka neobsahuje platný JSON.'], 400);
         }
 
+		// extrakcia premennych *****************************************************
         $id = filter_var($udaje['id'] ?? null, FILTER_VALIDATE_INT);
         $meno = $udaje['meno'] ?? null;
         $oddelenie = $udaje['oddelenie'] ?? null;
@@ -75,6 +76,7 @@ try {
         if (!is_bool($aktivny)) {
             odpoved(['chyba' => 'Príznak aktivny musí byť true alebo false.'], 400);
         }
+		// koniec extrakcie premennych *********************************************
 
         $kontrola = $pdo->prepare(
             'SELECT id FROM Pracovnici WHERE id = :id'
