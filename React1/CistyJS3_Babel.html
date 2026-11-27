@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <title>CistyJS3_Babel</title>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- Babel Standalone spracuje JSX v nasledujúcom skripte -->
+	<script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+
+	<script type="text/babel" data-presets="env,react">
+	/** @jsx h */
+
+    const root = document.querySelector("#root");
+
+    let meno = "";
+    let mena = [];
+    let dalsieId = 1;
+
+    // Namiesto Reactu vytvárame skutočné prvky DOM sami.
+    function h(typ, vlastnosti, ...deti) {
+      const prvok = document.createElement(typ);
+
+      for (const [nazov, hodnota] of Object.entries(vlastnosti || {})) {
+        if (nazov === "key" || hodnota == null) continue;
+
+        if (nazov.startsWith("on") && typeof hodnota === "function") {
+          const udalost = nazov.slice(2).toLowerCase(); // napr. "onclick" => "click", "onInput" => "input"
+          prvok.addEventListener(udalost, hodnota);
+        } else if (nazov === "value") {
+          prvok.value = hodnota;
+        } else {
+          prvok.setAttribute(nazov, hodnota);
+        }
+      }
+
+      for (const dieta of deti.flat(Infinity)) {
+        if (dieta == null || typeof dieta === "boolean") continue;
+
+        if (dieta instanceof Node) {
+          prvok.append(dieta);
+        } else {
+          prvok.append(document.createTextNode(String(dieta)));
+        }
+      }
+
+      return prvok;
+    }
+
+    function pridaj() {
+      const noveMeno = meno.trim();
+      if (noveMeno === "") return;
+
+      mena = [...mena, { id: dalsieId++, text: noveMeno }]; // "...mena" rozbali pole mena po jednotlivych prvkoch (vytvorenie noveho pola z povodnych + 1 novy prvok)
+      meno = "";
+      zobraz();
+    }
+
+    function odstran(id) {
+      mena = mena.filter(osoba => osoba.id !== id);
+      zobraz();
+    }
+
+    function App() {
+      return (
+        <div>
+          <input
+            id="meno" placeholder="Napíšte meno" value={meno}
+            onInput={udalost => { meno = udalost.target.value; }}
+          />
+
+          <button id="pridat" type="button" onClick={pridaj}>
+            Pridať
+          </button>
+			{/* JSX tento "button" premeni na volanie funkcie h():
+				h(
+				"button",
+				{ id: "pridat", type: "button", onClick: pridaj },
+				"Pridať"
+				);
+			*/}
+		  
+          <ul id="zoznam">
+            {mena.map(osoba => (
+              <li>
+                {osoba.text}{" "}
+                <button type="button" onClick={() => odstran(osoba.id)}>
+                  Odstrániť
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+
+    function zobraz() {
+      root.replaceChildren(App());
+    }
+
+    zobraz();
+  </script>
+</body>
+</html>

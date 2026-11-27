@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <title>CistyJS1</title>
+</head>
+<body>
+  <input id="meno" placeholder="Napíšte meno">
+  <button id="pridat" type="button">Pridať</button>
+  <ul id="zoznam"></ul>
+
+  <script>
+    const vstup = document.querySelector("#meno");
+    const zoznam = document.querySelector("#zoznam");
+    const tlacidloPridat = document.querySelector("#pridat");
+
+    tlacidloPridat.addEventListener("click", () => {
+      const meno = vstup.value.trim();
+      if (meno === "") return;
+
+      const riadok = document.createElement("li");
+      riadok.append(document.createTextNode(meno + " "));
+
+      const tlacidloOdstranit = document.createElement("button");
+      tlacidloOdstranit.type = "button";
+      tlacidloOdstranit.textContent = "Odstrániť";
+      tlacidloOdstranit.addEventListener("click", () => {
+        riadok.remove();
+      });
+
+      riadok.append(tlacidloOdstranit);
+      zoznam.append(riadok);
+      vstup.value = "";
+    });
+  </script>
+</body>
+</html>

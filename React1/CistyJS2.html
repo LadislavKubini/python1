@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <title>CistyJS3</title>
+</head>
+<body>
+  <input id="meno" placeholder="Napíšte meno">
+  <button id="pridat" type="button">Pridať</button>
+  <ul id="zoznam"></ul>
+
+  <script>
+    const vstup = document.querySelector("#meno");
+    const zoznam = document.querySelector("#zoznam");
+    const tlacidloPridat = document.querySelector("#pridat");
+
+    // Pole existuje v pamäti JavaScriptu, nie v HTML.
+    let mena = [];
+    let dalsieId = 1;
+
+    function zobrazMena() {
+      zoznam.replaceChildren();
+
+      for (const osoba of mena) {
+        const riadok = document.createElement("li");
+        riadok.append(document.createTextNode(osoba.text + " "));
+
+        const tlacidlo = document.createElement("button");
+        tlacidlo.type = "button";
+        tlacidlo.textContent = "Odstrániť";
+        tlacidlo.dataset.id = osoba.id;
+
+        riadok.append(tlacidlo);
+        zoznam.append(riadok);
+      }
+    }
+
+    tlacidloPridat.addEventListener("click", () => {
+      const text = vstup.value.trim();
+      if (text === "") return;
+
+      mena = [...mena, { id: dalsieId++, text }];
+      vstup.value = "";
+      zobrazMena();
+    });
+
+    zoznam.addEventListener("click", udalost => {
+      if (!udalost.target.matches("button[data-id]")) return;
+
+      const id = Number(udalost.target.dataset.id);
+      mena = mena.filter(osoba => osoba.id !== id);
+      zobrazMena();
+    });
+  </script>
+</body>
+</html>

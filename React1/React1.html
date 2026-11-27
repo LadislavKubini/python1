@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <title>React1</title>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- React a nástroj na spracovanie JSX; načítajú sa cez internet -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState } = React;
+    let dalsieId = 1;
+
+    function App() {
+      const [meno, nastavMeno] = useState("");
+      const [mena, nastavMena] = useState([]);
+
+      function pridaj() {
+        const noveMeno = meno.trim();
+        if (noveMeno === "") return;
+
+        nastavMena([
+          ...mena,
+          { id: dalsieId++, text: noveMeno }
+        ]);
+        nastavMeno("");
+      }
+
+      function odstran(id) {
+        nastavMena(mena.filter(osoba => osoba.id !== id));
+      }
+
+      return (
+        <>
+          <input
+            id="meno"
+            placeholder="Napíšte meno"
+            value={meno}
+            onChange={udalost => nastavMeno(udalost.target.value)}
+          />
+
+          <button id="pridat" type="button" onClick={pridaj}>Pridať</button>
+
+          <ul id="zoznam">
+            {mena.map(osoba => (
+              <li key={osoba.id}>
+                {osoba.text}{" "}
+                <button type="button" onClick={() => odstran(osoba.id)}>
+                  Odstrániť
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      );
+    }
+
+    ReactDOM.createRoot(document.querySelector("#root")).render(<App />);
+  </script>
+</body>
+</html>
